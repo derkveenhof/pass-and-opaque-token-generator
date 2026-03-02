@@ -14,11 +14,51 @@ const SYMBOLS = '!@#$%^&*()_+-=[]{}|;:,.<>?';
 
 type Mode = 'password' | 'token' | 'guid';
 
+type ModeMetadata = {
+  title: string;
+  description: string;
+};
+
 const MODE_ROUTE: Record<Mode, string> = {
   password: '/pass',
   token: '/token',
   guid: '/guid',
 };
+
+const MODE_METADATA: Record<Mode, ModeMetadata> = {
+  password: {
+    title: 'DVF Pass',
+    description: 'Genereer sterke wachtwoorden lokaal in je browser met Web Crypto API.',
+  },
+  token: {
+    title: 'DVF Token',
+    description: 'Genereer OpenSSL-achtige 256-bit tokens lokaal in je browser.',
+  },
+  guid: {
+    title: 'DVF Guid',
+    description: 'Genereer GUID\'s als unieke identifier (niet bedoeld als security-token).',
+  },
+};
+
+function setMetaTagByName(name: string, content: string): void {
+  let element = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
+  if (!element) {
+    element = document.createElement('meta');
+    element.setAttribute('name', name);
+    document.head.appendChild(element);
+  }
+  element.setAttribute('content', content);
+}
+
+function setMetaTagByProperty(property: string, content: string): void {
+  let element = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null;
+  if (!element) {
+    element = document.createElement('meta');
+    element.setAttribute('property', property);
+    document.head.appendChild(element);
+  }
+  element.setAttribute('content', content);
+}
 
 function getModeFromPath(pathname: string): Mode {
   if (pathname === '/token') return 'token';
@@ -124,8 +164,22 @@ export default function App() {
   }, [generateSecret]);
 
   useEffect(() => {
-    const pageTitle = mode === 'password' ? 'DVF Pass' : mode === 'token' ? 'DVF Token' : 'DVF Guid';
-    document.title = pageTitle;
+    const metadata = MODE_METADATA[mode];
+    const currentUrl = `${window.location.origin}${window.location.pathname}`;
+
+    document.title = metadata.title;
+
+    setMetaTagByName('description', metadata.description);
+    setMetaTagByName('twitter:card', 'summary');
+    setMetaTagByName('twitter:title', metadata.title);
+    setMetaTagByName('twitter:description', metadata.description);
+    setMetaTagByName('twitter:image', `${window.location.origin}/favicon.ico`);
+
+    setMetaTagByProperty('og:type', 'website');
+    setMetaTagByProperty('og:title', metadata.title);
+    setMetaTagByProperty('og:description', metadata.description);
+    setMetaTagByProperty('og:url', currentUrl);
+    setMetaTagByProperty('og:image', `${window.location.origin}/favicon.ico`);
   }, [mode]);
 
   useEffect(() => {
